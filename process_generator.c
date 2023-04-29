@@ -19,10 +19,17 @@ int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
     // TODO Initialization
+
     // 1. Read the input files.
-    readProcesses();
-    // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
-    readAlgo();
+    readProcesses(argv[1]);
+    CURR_ALGO = atoi(argv[3]);
+    if(CURR_ALGO == RR)
+        Quantum = atoi(argv[5]),
+        CURR_ALGO_mem = atoi(argv[7]);
+    else 
+        CURR_ALGO_mem = atoi(5);
+
+   
     // 3. Initiate and create the scheduler and clock processes.
     createSchChild();
     createClkChild();
@@ -66,46 +73,18 @@ void clearResources(int signum)
 }
 
 /**/
-void readProcesses()
+void readProcesses(char * file_name)
 {
     queue = createQueue();
 
-    FILE *fptr = fopen("processes.txt", "r");
+    FILE *fptr = fopen(file_name, "r");
     fseek(fptr, 37, SEEK_SET);
 
     while (readAddProccess(fptr, queue))
         ;
 }
 
-void readAlgo()
-{
-    int temp = 0;
-    while (1)
-    {
-        printf("\n=============\n1. Non-preemptive Highest Priority First (HPF). \n2. Shortest Remaining time Next (SRTN). \n3. Round Robin (RR).\n=============\nEnter 1,2,3 to choose from current Algorithms: ");
-        scanf("%d", &temp);
-        if (temp >= 1 && temp <= 3)
-        {
-            CURR_ALGO = temp;
-            break;
-        }
-    }
-    while (1)
-    {
-        printf("\n=============\n1. First Fit (FFT). \n2. Buddy List (BBD).\n=============\nEnter 1,2 to choose from Allocation Algorithms: ");
-        scanf("%d", &temp);
-        if (temp >= 1 && temp <= 2)
-        {
-            CURR_ALGO_mem = temp;
-            break;
-        }
-    }
-    if (CURR_ALGO == RR)
-    {
-        printf("Enter The Quantum: ");
-        scanf("%d", &Quantum);
-    }
-}
+
 
 void createClkChild()
 {

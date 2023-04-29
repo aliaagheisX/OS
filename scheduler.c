@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
 
     while (!isGeneratorFinished || !IsEmpty(ReadyQueue) || RunningProcess)
     {
-
         while (!isGeneratorFinished && getProcessFromGen() != -1)
         {
             if (CURR_ALGO == HPF)
@@ -39,6 +38,7 @@ void Handler(int signum)
     printf("Enter the handler \n");
     int status;
     pid_t pid = waitpid(-1, &status, WUNTRACED);
+    printf("====== Enter the handler %i %i ====\n", pid, signum);
     if (pid > 0) {
         if (WIFSTOPPED(status)) {
             printf("Child process %d was stopped with sig %d at %d.\n", pid,WTERMSIG(status), getClk());
@@ -71,7 +71,9 @@ void Handler(int signum)
             printf("NOT HANDLED %d %d\n", signum, status);
         }
     }
-     signal(SIGCHLD, Handler);   //when proc killed or stopped
+    //RunningProcess = NULL;
+    signal(SIGCHLD, Handler);   //when proc killed or stopped
+    printf("Finished %i %i %p\n", isGeneratorFinished, IsEmpty(ReadyQueue), RunningProcess);
 }
 
 

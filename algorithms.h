@@ -131,11 +131,11 @@ void UpdateInfo(state newState,Payload* load)
         destroyRemain(RunningProcess->remain);
        
       //==================Phase 2====================//
-         DeAllocation();
+        DeAllocation();
         if(CURR_ALGO==HPF||CURR_ALGO==SRTN)
-        DeleteProcessinHPF(ReadyQueue,RunningProcess);
+            DeleteProcessinHPF(ReadyQueue,RunningProcess);
         else
-        dequeuProcess(ReadyQueue);
+            dequeuProcess(ReadyQueue);
         RunningProcess = NULL;
          printf("finish update info finished \n");
         return;
@@ -346,7 +346,7 @@ void implementRR(struct PQueue *ReadyQueue, int q)
     else if (getClk() == RunningProcess->laststart + q)
     {   
         processIn temp = ReadyQueue->head->proccess;
-        if (temp.remaining > 0) { // not finished yet
+        if (temp.remaining > 0 /*&& ReadyQueue->head->next*/) { // not finished yet & there's another process
             preempt();
             dequeuProcess(ReadyQueue); 
             InsertInRR(temp, ReadyQueue, q);    
@@ -384,8 +384,8 @@ void DeAllocation()
         deallocate_process(memory, RunningProcess);
     else
     {
-        printf("finish dealloction\n");
         deallocation_process_buddy(RunningProcess);
+        printf("finish dealloction\n");
     }
 }
 
