@@ -35,7 +35,7 @@ int getClk()
 {
     return *shmaddr;
 }
-int * attachRemain(int shmid,int id)
+int * attachRemain(int shmid)
 {
     shmaddrR=(int *)shmat(shmid,(void *)0,0);
     if(shmaddrR == -1)

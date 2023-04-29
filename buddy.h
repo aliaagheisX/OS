@@ -123,6 +123,7 @@ void deallocation_process_buddy(processIn *process) {
 
     allocate_hole_buddy(buddy_list[index], process->memsize, process->start_address);
     
+    merging_holes_till_up(index);
 
     //after allocating new hole
     //check if new
@@ -132,25 +133,32 @@ void deallocation_process_buddy(processIn *process) {
 
 void merging_holes_till_up(int index) {
     if(index >= SZ) return;
-
+    printf("Enter index %i\n", index);
     int real_size = (1 << index);
     //printf("%d",buddy_list[index]);
     ListNode* curr = buddy_list[index]->head;
     ListNode* prev = NULL;
     while(curr) {
-        mergeNext(buddy_list[index], curr); //try to merge this hole with the hole after it
+        if(
+            !curr || !curr->next 
+            || curr->start_address + curr->memsize != curr->next->start_address
+            || (curr->start_address / curr->memsize) % 2 == 0
+        )
+            mergeNext(buddy_list[index], curr); //try to merge this hole with the hole after it
         if(curr->memsize > real_size) { //if it's size change || [merged]
             //1.allocate new hole above me
             allocate_hole_buddy(buddy_list[index+1], curr->memsize, curr->start_address);
             //2.deallocate the current hole 
             deallocate_hole(buddy_list[index], prev, curr);
+
+            merging_holes_till_up(index+1);
+            return;
         }
 
         prev = curr;
         curr = curr->next;
     }
 
-    merging_holes_till_up(index+1);
 }
 
 //resumed | started => running

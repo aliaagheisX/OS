@@ -131,12 +131,15 @@ void UpdateInfo(state newState,Payload* load)
         update_cpu_calc(RunningProcess);
         RunningProcess->remaining=*(RunningProcess->remain);
         printinfo(RunningProcess); //show results
+        
+        
+        
         destroyRemain(RunningProcess->remain);
-       
       //==================Phase 2====================//
         DeAllocation();
-        
         DequeuProcessFromQueue(ReadyQueue,RunningProcess);
+        shmctl(RunningProcess->shmid, IPC_RMID, (struct shmid_ds *)0);
+
         RunningProcess = NULL;
         return;
     } 
@@ -207,14 +210,13 @@ void runProcess(processIn *pRun)
             RunningProcess = NULL;
             return;
         }
-    int shmid;
-    shmid = shmget(IPC_PRIVATE, 4096, IPC_CREAT | 0644);
-
+    int shmid = shmget(IPC_PRIVATE, 4096, IPC_CREAT | 0644);
     if (shmid == -1)
     {
         perror("Error in create");
         exit(-1);
     }
+    RunningProcess->shmid = shmid;
 
         int pid = fork();
         if (pid == -1)
@@ -235,7 +237,7 @@ void runProcess(processIn *pRun)
         else {
             Payload load;
             load.pid = pid;
-            pRun->remain =attachRemain(shmid,pRun->id);
+            pRun->remain =attachRemain(shmid);
             UpdateInfo(started, &load);
         }
     }

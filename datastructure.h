@@ -56,6 +56,7 @@ typedef struct ProcessIn
 
     int memsize;
     int start_address;
+    int shmid;
 } processIn;
 ///////////////////////////////////////////////////////
 ///==============================
@@ -322,7 +323,6 @@ int allocate_process(List* list, processIn *process) { //deallocate hole
 void mergeNext(List* list, ListNode* node) {
     if(!node || !node->next 
     || node->start_address + node->memsize != node->next->start_address) return;
-    
     node->memsize += node->next->memsize;
     
     deallocate_hole(list, node, node->next);

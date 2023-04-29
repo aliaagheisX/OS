@@ -11,8 +11,8 @@ int main(int agrc, char * argv[])
     initClk();
     int id=atoi(argv[1]);
     int runtime=atoi(argv[2]);
-
-    int * Rem=attachRemain(atoi(argv[3]),id);
+    
+    int * Rem=attachRemain(atoi(argv[3]));
     *Rem=runtime;
     
     
@@ -28,9 +28,8 @@ int main(int agrc, char * argv[])
     }
     //printf("Finished Process\n");
 
-      shmctl(atoi(argv[3]), IPC_RMID, (struct shmid_ds *)0);
-    destroyClk(false);
     destroyRemain(Rem);
+    destroyClk(false);
 
     raise(SIGKILL);
     
