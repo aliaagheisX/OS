@@ -10,7 +10,7 @@ int main(int agrc, char * argv[])
     int runtime=atoi(argv[2]);
      //TODO it needs to get the remaining time from somewhere
     //initRemaining(id);
-    int * Rem=attachRemain(atoi(argv[3]));
+    int * Rem=attachRemain(atoi(argv[3]),id);
     printf("Here is our process %d    \n",id);
     *Rem=runtime;
     //remainingtime = atoi(argv[1]);
@@ -26,7 +26,11 @@ int main(int agrc, char * argv[])
         prev=getClk();
     }
     //printf("Finished Process\n");
+
+      shmctl(atoi(argv[3]), IPC_RMID, (struct shmid_ds *)0);
     destroyClk(false);
+    destroyRemain(Rem);
+
     raise(SIGKILL);
     
 }

@@ -23,16 +23,19 @@ int findlog(processIn* p)
 void initialize_buddy() {
     for(int i = 0;i < SZ;i++) {
         buddy_list[i] = (List*)malloc(sizeof(List));
+    printf( " buddy list pointer %p\n",buddy_list[i]);
     }
     buddy_list[10]->head = buddy_list[10]->tail = CreateListNode(1024, 0);
 }
 
 int allocation_process_buddy(processIn *process) {
     int index = findlog(process);
+    printf("\n index of process %d and index is %d \n",process->id,index);
 
     //if list of holes not empty   
     if(buddy_list[index]->head)  {
         process->start_address = buddy_list[index]->head->start_address; //get the address
+        process->memsize=1<<index;
         ListNode* curr_hole = buddy_list[index]->head;
         //dequeu head of holes
         buddy_list[index]->head = curr_hole->next;         
@@ -55,14 +58,13 @@ int allocation_process_buddy(processIn *process) {
 
     if(!buddy_list[index]->head) //return the check
         return -1;
-
+     process->memsize=1<<index;
 
     process->start_address = buddy_list[index]->head->start_address; //get the address
     ListNode* curr_hole = buddy_list[index]->head;
     //dequeu head of holes
     buddy_list[index]->head = curr_hole->next;         
     free(curr_hole);
-
 
     return 1;
 }
@@ -121,6 +123,7 @@ void deallocation_process_buddy(processIn *process) {
 
     allocate_hole_buddy(buddy_list[index], process->memsize, process->start_address);
     
+
     //after allocating new hole
     //check if new
     
@@ -131,7 +134,7 @@ void merging_holes_till_up(int index) {
     if(index >= SZ) return;
 
     int real_size = (1 << index);
-
+    //printf("%d",buddy_list[index]);
     ListNode* curr = buddy_list[index]->head;
     ListNode* prev = NULL;
     while(curr) {

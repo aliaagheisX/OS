@@ -4,10 +4,12 @@
 
 int main(int argc, char *argv[])
 {
-    initSCH();
 
     CURR_ALGO = atoi(argv[1]);
-    Quantum = atoi(argv[2]);
+    CURR_ALGO_mem=atoi(argv[2]);
+    Quantum = atoi(argv[3]);
+    printf("algo is in schedular  %d \n",CURR_ALGO_mem);
+    initSCH();
 
     while (!isGeneratorFinished || !IsEmpty(ReadyQueue) || RunningProcess)
     {
@@ -26,8 +28,6 @@ int main(int argc, char *argv[])
 
         if (CURR_ALGO == HPF)
             implementHPF(ReadyQueue);
-        else if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
-            implementRR(ReadyQueue, Quantum); // RR
         else if (CURR_ALGO == SRTN && (!RunningProcess || ReadyQueue->head->proccess.id != RunningProcess->id))
             implementSRTN(ReadyQueue);
     }
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 
 void Handler(int signum)
 {
+    printf("Enter the handler \n");
     int status;
     pid_t pid = waitpid(-1, &status, WUNTRACED);
     if (pid > 0) {
@@ -44,7 +45,9 @@ void Handler(int signum)
         }
         else if(WIFSIGNALED(status)) {
             printf("Child process %d was killed by signal %d at %d.\n", pid, WTERMSIG(status), getClk());
+
             UpdateInfo(finished, NULL);
+
 
             if (CURR_ALGO == HPF)
                 implementHPF(ReadyQueue);
@@ -77,6 +80,7 @@ void clearResources(int signum)
     
     finish_cpu_calc();
     fclose(log_file); // close scheduler.log
+    fclose(mem_log_file);
     destroyQueue(ReadyQueue);
     
     destroyClk(true); //// NOTE: transfet it true
@@ -85,6 +89,7 @@ void clearResources(int signum)
     raise(SIGKILL);
 }
 void initalize_memory() {
+    printf("algo is %d \n",CURR_ALGO_mem);
     if(CURR_ALGO_mem == BDD)
         initialize_buddy();
     else {
@@ -102,11 +107,16 @@ void initSCH()
 
     log_file = fopen("scheduler.log", "w"); // open scheduler.perf in append mode
     mem_log_file = fopen("memory.log", "w"); // open scheduler.perf in append mode
+
     fprintf(log_file,"At time x\tprocess y\tstate    \tarr w\ttotal z\tremain y\twait k\n");
-fprintf(mem_log_file,"#At time x allocated y bytes for process z from I to j\n");
+    fprintf(mem_log_file,"#At time x allocated y bytes for process z from I to j\n");
+
     ReadyQueue = createQueue();
+    waitingQueue_allocation=createQueue();
+    //Phase 2
     initalize_memory();
-    
+
+    ///
     cpu_state.avg_waiting = 0;
     cpu_state.avg_wta = 0;
     cpu_state.cpu_utilization = 0;
@@ -137,8 +147,6 @@ int getProcessFromGen()
     isGeneratorFinished = 0;
     return id;
 }
-
-
 
 
 /// => printinfo =>>>

@@ -7,6 +7,7 @@ void readAlgo();
 void createClkChild();
 void createSchChild();
 void sendProccessToSchd();
+ALGO_mem CURR_ALGO_mem;
 
 struct PQueue *queue;
 enum ALGO CURR_ALGO;
@@ -70,7 +71,7 @@ void readProcesses()
     queue = createQueue();
 
     FILE *fptr = fopen("processes.txt", "r");
-    fseek(fptr, 28, SEEK_SET);
+    fseek(fptr, 37, SEEK_SET);
 
     while (readAddProccess(fptr, queue))
         ;
@@ -86,6 +87,16 @@ void readAlgo()
         if (temp >= 1 && temp <= 3)
         {
             CURR_ALGO = temp;
+            break;
+        }
+    }
+    while (1)
+    {
+        printf("\n=============\n1. First Fit (FFT). \n2. Buddy List (BBD).\n=============\nEnter 1,2 to choose from Allocation Algorithms: ");
+        scanf("%d", &temp);
+        if (temp >= 1 && temp <= 2)
+        {
+            CURR_ALGO_mem = temp;
             break;
         }
     }
@@ -116,10 +127,12 @@ void createSchChild()
     if (schedule_pid == 0)
     {
         char algo[5];
+        char algomem[5];
         char q[5];
         sprintf(algo, "%i", (int)CURR_ALGO);
+        sprintf(algomem, "%i", (int)CURR_ALGO_mem);
         sprintf(q, "%i", Quantum);
-        execl("scheduler.out", "scheduler.out", algo, q, NULL);
+        execl("scheduler.out", "scheduler.out", algo,algomem, q, NULL);
     }
     if (schedule_pid < 0)
     {

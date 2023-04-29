@@ -35,10 +35,10 @@ int getClk()
 {
     return *shmaddr;
 }
-int * attachRemain(int shmid)
+int * attachRemain(int shmid,int id)
 {
     shmaddrR=(int *)shmat(shmid,(void *)0,0);
-    if((int)shmaddrR == -1)
+    if(shmaddrR == -1)
     {
         printf("Error in Getting Remain\n");
         //shmaddrR[id]=(int *)shmat(shmR[id],(void *)0,0);
@@ -89,5 +89,10 @@ void destroyClk(bool terminateAll)
     {
         killpg(getpgrp(), SIGINT);
     }
+}
+void destroyRemain(int *shmaddrR)
+{
+    shmdt(shmaddrR);
+   
 }
 #endif

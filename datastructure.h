@@ -17,15 +17,14 @@ typedef enum State{
     running
 }state;
 
+typedef struct Payload { //payload of state
+    int pid;
+} Payload;
+//Phase 2
 typedef enum ALGO_mem {
     FFT = 1,
     BDD
 } ALGO_mem;
-
-typedef struct Payload { //payload of state
-    int pid;
-} Payload;
-
 
 typedef struct CpuState {
     double cpu_utilization;
@@ -58,8 +57,9 @@ typedef struct ProcessIn
     int memsize;
     int start_address;
 } processIn;
+///////////////////////////////////////////////////////
 ///==============================
-struct PNode    
+struct PNode
 {
     processIn proccess;
     struct PNode *next;
@@ -243,10 +243,7 @@ struct PNode *peek(struct PQueue *queue)
 {
     return queue->head;
 }
-
-
-
-
+//////////////////////////////////////////////////////Added for phase 2 :) /////////////////////////////////////////////
 typedef struct ListNode
 {
     int memsize;
@@ -269,7 +266,6 @@ List* CreateList() {
     list->head = list->tail = NULL;
     return list;
 }
-
 ListNode* CreateListNode(int memsize,int start_address) {
     ListNode* listNode  = (ListNode*) malloc(sizeof(ListNode));
     listNode->memsize = memsize;
@@ -295,8 +291,8 @@ void deallocate_hole(List*list, ListNode * prev,ListNode * curr) {
         prev->next = curr->next;
     free(curr);
 }
-
 int allocate_process(List* list, processIn *process) { //deallocate hole
+    printf("\n  First Fit index of process %d \n",process->id);
     ListNode* curr_hole = list->head; //loop on holes
     ListNode* prev_hole = NULL; //loop on holes
 
@@ -324,7 +320,6 @@ int allocate_process(List* list, processIn *process) { //deallocate hole
     return 1;
         
 }
-
 void mergeNext(List* list, ListNode* node) {
     if(!node || !node->next 
     || node->start_address + node->memsize != node->next->start_address) return;
@@ -333,11 +328,6 @@ void mergeNext(List* list, ListNode* node) {
     
     deallocate_hole(list, node, node->next);
 }
-
-
-
-
-
 void deallocate_process(List *list, processIn *process) { //allocate hole
     //create new hole with same parameters of process
     ListNode *node = CreateListNode(process->memsize, process->start_address);
@@ -370,9 +360,6 @@ void deallocate_process(List *list, processIn *process) { //allocate hole
         list->tail = node;
     }
 }
-
-
-
 void printList(List *l)
 {
     ListNode *tmp = l->head;
