@@ -8,65 +8,64 @@ int main(int argc, char *argv[])
     CURR_ALGO = atoi(argv[1]);
     CURR_ALGO_mem=atoi(argv[2]);
     Quantum = atoi(argv[3]);
-    printf("algo is in schedular  %d \n",CURR_ALGO_mem);
+    int prev_time = -1;
+    int curr_time = 0;
     initSCH();
+    
 
     while (!isGeneratorFinished || !IsEmpty(ReadyQueue) || RunningProcess)
     {
-        while (!isGeneratorFinished && getProcessFromGen() != -1)
-        {
-            if (CURR_ALGO == HPF)
-                InsertInHPF(curr_procc, ReadyQueue);
-            else if (CURR_ALGO == SRTN)
-                InsertInSRTN(curr_procc, ReadyQueue);
-            else if(CURR_ALGO == RR)
-                InsertInRR(curr_procc, ReadyQueue, Quantum); // RR
+        curr_time = getClk();
 
-            
+        // =========== if 1 clk cycle happen ============
+        // 1 - Read if Process come from Generator
+        // 2 - if there's Running Process => update it's state
+        // 3 - Call implementation of Scheduler Algorithm (may be they use it)
+        
+        if(curr_time != prev_time) {
+            ReadingProcess();
+            if(RunningProcess)
+                UpdateInfo(running, NULL);
+            if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
+                    implementRR(ReadyQueue, Quantum); 
+            else if (CURR_ALGO == HPF)
+                implementHPF(ReadyQueue);
+            else if (CURR_ALGO == SRTN && 
+                    (!RunningProcess || 
+                        (ReadyQueue->head && ReadyQueue->head->proccess.id != RunningProcess->id)
+                    ))
+                implementSRTN(ReadyQueue);
+            prev_time = curr_time;
         }
 
-        if (CURR_ALGO == HPF)
-            implementHPF(ReadyQueue);
-        else if (CURR_ALGO == SRTN && (!RunningProcess || ReadyQueue->head->proccess.id != RunningProcess->id))
-            implementSRTN(ReadyQueue);
+        
     }
     raise(SIGINT);
 }
 
 void Handler(int signum)
 {
-    printf("Enter the handler \n");
     int status;
     pid_t pid = waitpid(-1, &status, WUNTRACED);
     printf("====== Enter the handler %i %i ====\n", pid, signum);
     if (pid > 0) {
         if (WIFSTOPPED(status)) {
+            
             printf("Child process %d was stopped with sig %d at %d.\n", pid,WTERMSIG(status), getClk());
         }
-        else if(WIFSIGNALED(status)) {
+        else if(WIFSIGNALED(status)||WIFEXITED(status)) {
             printf("Child process %d was killed by signal %d at %d.\n", pid, WTERMSIG(status), getClk());
-
             UpdateInfo(finished, NULL);
-
-
-            if (CURR_ALGO == HPF)
+            if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
+                    implementRR(ReadyQueue, Quantum); 
+            else if (CURR_ALGO == HPF)
                 implementHPF(ReadyQueue);
-            else if (CURR_ALGO == SRTN && (!RunningProcess || ReadyQueue->head->proccess.id != RunningProcess->id))
+            else if (CURR_ALGO == SRTN && 
+                    (!RunningProcess || 
+                        (ReadyQueue->head && ReadyQueue->head->proccess.id != RunningProcess->id)
+                    ))
                 implementSRTN(ReadyQueue);
-                else if (CURR_ALGO==RR)
-                implementRR(ReadyQueue, Quantum);
         } 
-        else if (WIFEXITED(status)) {
-            printf("Child process %d exited with status %d at %d.\n", pid, WEXITSTATUS(status), getClk());
-            UpdateInfo(finished, NULL);
-
-            if (CURR_ALGO == HPF)
-                implementHPF(ReadyQueue);
-            else if (CURR_ALGO == SRTN && (!RunningProcess || ReadyQueue->head->proccess.id != RunningProcess->id))
-                implementSRTN(ReadyQueue);
-            else if (CURR_ALGO==RR)
-                implementRR(ReadyQueue, Quantum);
-        }
         else {
             printf("NOT HANDLED %d %d\n", signum, status);
         }
@@ -91,7 +90,6 @@ void clearResources(int signum)
     raise(SIGKILL);
 }
 void initalize_memory() {
-    printf("algo is %d \n",CURR_ALGO_mem);
     if(CURR_ALGO_mem == BDD)
         initialize_buddy();
     else {
@@ -101,12 +99,10 @@ void initalize_memory() {
 }
 void initSCH()
 {
-    signal(SIGCHLD, Handler);   //when proc killed or stopped
+    //signal(SIGCHLD, Handler);   //when proc killed or stopped
     signal(SIGINT, clearResources);
     
-    signal(SIGALRM, UpdateInfoNormal);
-    alarm(1);
-
+   
     log_file = fopen("scheduler.log", "w"); // open scheduler.perf in append mode
     mem_log_file = fopen("memory.log", "w"); // open scheduler.perf in append mode
 

@@ -32,10 +32,17 @@ int Allocation();
 // ==== Headers
 
 void ReadingProcess() {
-    while (!isGeneratorFinished && getProcessFromGen() != -1)
-        InsertInReadyQueue(curr_procc);
-    
+    while (!isGeneratorFinished && getProcessFromGen() != -1) {
+        struct PNode *newNode = CreateNode(curr_procc);
+        if (CURR_ALGO == HPF)
+                enqueuProcessByPriority(newNode, ReadyQueue);
+        else if (CURR_ALGO == SRTN)
+                enqueueByRemaining(newNode, ReadyQueue);
+        else if(CURR_ALGO == RR)
+                enqueuProcess(newNode, ReadyQueue);// RR
+    }    
 }
+
 void update_cpu_calc(processIn *p) {
     cpu_state.numCompleted++;
     cpu_state.totalRunningTime += p->runtime;
@@ -69,7 +76,6 @@ void finish_cpu_calc() {
 
 void printinfo(processIn *p)
 {
-    printf("enter printinfo porinter %p \n",mem_log_file);
     switch (p->curr_state)
     {
 
@@ -97,10 +103,10 @@ void printinfo(processIn *p)
 }
 
 void UpdateInfo(state newState,Payload* load)
-{
+{   
     if(!RunningProcess) return;
+    
     if(newState == started) {
-        //printf("The Processes %i started\n", RunningProcess->id);
         RunningProcess->starttime = getClk();
         RunningProcess->systemID = load->pid;
         RunningProcess->firsttime = 1;
@@ -112,12 +118,9 @@ void UpdateInfo(state newState,Payload* load)
 
 
     }
-    else if(newState == finished) {
-        printf("enter update info finished \n");
-        int stat_loc;
-        //printf("The Processes %i finished\n", RunningProcess->id);
-
-        waitpid(RunningProcess->systemID, &stat_loc, 0);
+    else if(newState == finished || *(RunningProcess->remain) == 0) {
+        int state;
+        wait(&state);
 
         RunningProcess->curr_state = finished;
         RunningProcess->finish_time = getClk();
@@ -132,17 +135,30 @@ void UpdateInfo(state newState,Payload* load)
        
       //==================Phase 2====================//
         DeAllocation();
-        if(CURR_ALGO==HPF||CURR_ALGO==SRTN)
-            DeleteProcessinHPF(ReadyQueue,RunningProcess);
-        else
-            dequeuProcess(ReadyQueue);
+        
+        DequeuProcessFromQueue(ReadyQueue,RunningProcess);
         RunningProcess = NULL;
-         printf("finish update info finished \n");
         return;
     } 
-    else if(newState == stoped) {
-        //printf("The Processes %i stopped\n", RunningProcess->id);
+    else if(newState == finished) {
+        RunningProcess->curr_state = finished;
+        RunningProcess->finish_time = getClk();
 
+        ////////// CALCulation //////////
+        RunningProcess->TA = RunningProcess->finish_time - RunningProcess->arrival_time;
+        RunningProcess->WTA = RunningProcess->TA*1.0 / RunningProcess->runtime;
+        update_cpu_calc(RunningProcess);
+        RunningProcess->remaining=*(RunningProcess->remain);
+        printinfo(RunningProcess); //show results
+        destroyRemain(RunningProcess->remain);
+       
+      //==================Phase 2====================//
+        DeAllocation();
+        
+        DequeuProcessFromQueue(ReadyQueue,RunningProcess);
+        RunningProcess = NULL;
+    } 
+    else if(newState == stoped) {
         RunningProcess->curr_state = stoped;
         RunningProcess->lastStop=getClk();
         RunningProcess->firsttime = 1;
@@ -150,29 +166,27 @@ void UpdateInfo(state newState,Payload* load)
 
         RunningProcess = NULL;
 
-        return;
     }
     else if(newState == resumed) {
 
         RunningProcess->waiting =  RunningProcess->laststart - RunningProcess->starttime - RunningProcess->runtime + *(RunningProcess->remain);
-        //printf("The Processes %i resumed\n", RunningProcess->id);
 
         RunningProcess->curr_state = resumed;
         RunningProcess->laststart = getClk();
-       // RunningProcess->waiting += RunningProcess->laststart - RunningProcess->lastStop;   
         printinfo(RunningProcess);
         RunningProcess->curr_state = running;
     }
     
-    else if(RunningProcess->curr_state == running){
-        //printf("The Processes %i running\n", RunningProcess->id);
+    else if(newState == running){
         
         RunningProcess->curr_state = running;
         RunningProcess->cumlativeRunning += 1;
+        
         RunningProcess->remaining = *(RunningProcess->remain);
         
         printinfo(RunningProcess);
     }
+
     // else
     
 }
@@ -181,20 +195,8 @@ void UpdateInfo(state newState,Payload* load)
 
 
 
-/* void UpdateInfoNormal() {
-    UpdateInfo(running, NULL);
-    alarm(1);
-}  */
-void UpdateInfoNormal() {
-    ReadingProcess();
-    //printf("Entering Alarm %p at clk %i\n", RunningProcess, getClk());
-    if(RunningProcess)
-        UpdateInfo(running, NULL);
-    if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
-            implementRR(ReadyQueue, Quantum); // RR
-    
-    alarm(1);
-} 
+
+
 
 // ========================== Utilites ===============
 
@@ -203,17 +205,11 @@ int min(int a, int b)
     return (a > b) ? b : a;
 }
 
-void stopProcess(int sysid)
-{
-    printf("Here is Stop %d\n",sysid);
-    kill(sysid, SIGTSTP);
-}
 
 void preempt()
 {
-    stopProcess(RunningProcess->systemID);
-    UpdateInfo(stoped,NULL);
-    return;
+    kill(RunningProcess->systemID, SIGTSTP);
+    UpdateInfo(stoped, NULL);
 }
 
 void runProcess(processIn *pRun)
@@ -236,11 +232,7 @@ void runProcess(processIn *pRun)
         perror("Error in create");
         exit(-1);
     }
-    else
-        printf("\nShared memory ID = %d\n", shmid);
 
-
-    //
         int pid = fork();
         if (pid == -1)
         {
@@ -346,7 +338,7 @@ void implementRR(struct PQueue *ReadyQueue, int q)
     else if (getClk() == RunningProcess->laststart + q)
     {   
         processIn temp = ReadyQueue->head->proccess;
-        if (temp.remaining > 0 /*&& ReadyQueue->head->next*/) { // not finished yet & there's another process
+        if (temp.remaining > 0 /* && ReadyQueue->head->next */) { // not finished yet & there's another process
             preempt();
             dequeuProcess(ReadyQueue); 
             InsertInRR(temp, ReadyQueue, q);    
@@ -354,6 +346,7 @@ void implementRR(struct PQueue *ReadyQueue, int q)
             runProcess(RunningProcess);
         }
     }
+
 }
 int Allocation()
 {
@@ -368,13 +361,11 @@ int Allocation()
         RunningProcess = NULL;
         return -1;
     }
-    printf("\n process memsize is %d\n",RunningProcess->memsize);
     return 1;
 }
 
 void DeAllocation()
 {
-    printf("enter dealloction\n");
     if (waitingQueue_allocation->head && waitingQueue_allocation->head->proccess.memsize <= RunningProcess->memsize)
     {
         InsertInReadyQueue(waitingQueue_allocation->head->proccess);
@@ -385,7 +376,6 @@ void DeAllocation()
     else
     {
         deallocation_process_buddy(RunningProcess);
-        printf("finish dealloction\n");
     }
 }
 

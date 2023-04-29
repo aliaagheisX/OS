@@ -86,7 +86,7 @@ void enqueuProcess(struct PNode *node, struct PQueue *queue)
         queue->tail = node;
         node->next=NULL;
 }
-void DeleteProcessinHPF(struct PQueue *queue,processIn*ToDelete)
+void DequeuProcessFromQueue(struct PQueue *queue,processIn*ToDelete)
 {
    struct PNode*prev=queue->head;
    if(prev->proccess.id==ToDelete->id)
@@ -292,7 +292,6 @@ void deallocate_hole(List*list, ListNode * prev,ListNode * curr) {
     free(curr);
 }
 int allocate_process(List* list, processIn *process) { //deallocate hole
-    printf("\n  First Fit index of process %d \n",process->id);
     ListNode* curr_hole = list->head; //loop on holes
     ListNode* prev_hole = NULL; //loop on holes
 
