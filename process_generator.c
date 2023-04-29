@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
         Quantum = atoi(argv[5]),
         CURR_ALGO_mem = atoi(argv[7]);
     else 
-        CURR_ALGO_mem = atoi(5);
+        CURR_ALGO_mem = atoi(argv[5]);
 
    
     // 3. Initiate and create the scheduler and clock processes.

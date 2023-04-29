@@ -140,24 +140,7 @@ void UpdateInfo(state newState,Payload* load)
         RunningProcess = NULL;
         return;
     } 
-    else if(newState == finished) {
-        RunningProcess->curr_state = finished;
-        RunningProcess->finish_time = getClk();
-
-        ////////// CALCulation //////////
-        RunningProcess->TA = RunningProcess->finish_time - RunningProcess->arrival_time;
-        RunningProcess->WTA = RunningProcess->TA*1.0 / RunningProcess->runtime;
-        update_cpu_calc(RunningProcess);
-        RunningProcess->remaining=*(RunningProcess->remain);
-        printinfo(RunningProcess); //show results
-        destroyRemain(RunningProcess->remain);
-       
-      //==================Phase 2====================//
-        DeAllocation();
-        
-        DequeuProcessFromQueue(ReadyQueue,RunningProcess);
-        RunningProcess = NULL;
-    } 
+   
     else if(newState == stoped) {
         RunningProcess->curr_state = stoped;
         RunningProcess->lastStop=getClk();
@@ -335,12 +318,14 @@ void implementRR(struct PQueue *ReadyQueue, int q)
         RunningProcess = p;
         runProcess(p);
     }
-    else if (getClk() == RunningProcess->laststart + q)
+    else if (getClk() >= RunningProcess->laststart + q)
     {   
+    ReadingProcess();
         processIn temp = ReadyQueue->head->proccess;
-        if (temp.remaining > 0 /* && ReadyQueue->head->next */) { // not finished yet & there's another process
+        if (temp.remaining > 0 && ReadyQueue->head->next) { // not finished yet & there's another process
             preempt();
-            dequeuProcess(ReadyQueue); 
+            dequeuProcess(ReadyQueue);
+             
             InsertInRR(temp, ReadyQueue, q);    
             RunningProcess = &ReadyQueue->head->proccess;
             runProcess(RunningProcess);

@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     int curr_time = 0;
     initSCH();
     
+    
 
     while (!isGeneratorFinished || !IsEmpty(ReadyQueue) || RunningProcess)
     {
@@ -99,6 +100,8 @@ void initalize_memory() {
 }
 void initSCH()
 {
+    initClk();
+
     //signal(SIGCHLD, Handler);   //when proc killed or stopped
     signal(SIGINT, clearResources);
     
@@ -132,7 +135,6 @@ void initSCH()
         perror("scheduler: Error in create queue");
         exit(-1);
     }
-    initClk();
 }
 
 int getProcessFromGen()
