@@ -1,6 +1,6 @@
 #include "datastructure.h"
 #include "headers.h"
-
+int isProcessFinished = 0;
 pid_t pid;
 processIn *RunningProcess = NULL;
 enum ALGO CURR_ALGO = HPF;
@@ -34,6 +34,7 @@ int Allocation();
 void ReadingProcess() {
     while (!isGeneratorFinished && getProcessFromGen() != -1) {
         struct PNode *newNode = CreateNode(curr_procc);
+        printf("== read process %i == \n", getClk());
         if (CURR_ALGO == HPF)
                 enqueuProcessByPriority(newNode, ReadyQueue);
         else if (CURR_ALGO == SRTN)
@@ -46,13 +47,14 @@ void ReadingProcess() {
 void update_cpu_calc(processIn *p) {
     cpu_state.numCompleted++;
     cpu_state.totalRunningTime += p->runtime;
+    cpu_state.totalTimeSchedule = p->finish_time;
     cpu_state.totalWTA += p->WTA;
     cpu_state.totalWaiting += (double)p->waiting;
     cpu_state.totalWaitingSquared += (double)p->waiting * (double)p->waiting;
 
 }
 void finish_cpu_calc() {
-    cpu_state.cpu_utilization = (double)cpu_state.totalRunningTime / (double)(getClk() - 1);
+    cpu_state.cpu_utilization = (double)cpu_state.totalRunningTime / (double)(cpu_state.totalTimeSchedule - 1);
     cpu_state.avg_wta = cpu_state.totalWTA / cpu_state.numCompleted;
     cpu_state.avg_waiting = cpu_state.totalWaiting / cpu_state.numCompleted;
     cpu_state.std_waiting = sqrt( (cpu_state.totalWaitingSquared / cpu_state.numCompleted) - pow(cpu_state.avg_waiting, 2.0));
@@ -81,19 +83,24 @@ void printinfo(processIn *p)
 
     case 0:
         /* code */
-        fprintf(log_file, "At time %d\tprocess %d\tstarted    \tarr %d\ttotal %d\tremain %d\twait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, p->remaining, p->waiting);
+        fprintf(log_file, "At time %d\tprocess %d\tstarted    \tarr %d\ttotal %d\tremain %d\twait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         fprintf(mem_log_file, "At time %d allocated %d bytes for process %d from %d to %d\n", p->starttime, p->memsize, p->id, p->start_address, p->start_address + p->memsize - 1);
         break;
     case 1:
-        fprintf(log_file, "At time %d\tprocess %d\tstopped     arr %d\ttotal %d\tremain %d\twait %d \n", getClk(), p->id, p->arrival_time, p->runtime, p->remaining, p->waiting);
+        fprintf(log_file, "At time %d\tprocess %d\tstopped     arr %d\ttotal %d\tremain %d\twait %d \n", p->lastStop, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         break;
     case 2:
-        fprintf(log_file, "At time %d\tprocess %d\tresumed     arr %d\ttotal %d\tremain %d\twait %d  \n", getClk(), p->id, p->arrival_time, p->runtime, p->remaining, p->waiting);
+        fprintf(log_file, "At time %d\tprocess %d\tresumed     arr %d\ttotal %d\tremain %d\twait %d  \n", p->laststart, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         /* code */
         break;
     case 3:
-        fprintf(log_file, "At time %d\tprocess %d\tfinished\tarr %d\ttotal %d\tremain %d\twait %d\tTA %d\tWTA %.2f \n", getClk(), p->id, p->arrival_time, p->runtime, p->remaining, p->waiting, p->TA, p->WTA);
-        fprintf(mem_log_file, "At time %d freed %d bytes for process %d from %d to %d\n", getClk(), p->memsize, p->id, p->start_address, p->start_address + p->memsize - 1);
+        fprintf(log_file, "At time %d\tprocess %d\tfinished\tarr %d\ttotal %d\tremain %d\twait %d\tTA %d\tWTA %.2f \n", 
+        p->finish_time, 
+        p->id, 
+        p->arrival_time, 
+        p->runtime,
+        *(p->remain), p->waiting, p->TA, p->WTA);
+        fprintf(mem_log_file, "At time %d freed %d bytes for process %d from %d to %d\n", p->finish_time, p->memsize, p->id, p->start_address, p->start_address + p->memsize - 1);
         break;
     case 4:
        // fprintf(log_file, "At time %d\tprocess %d\trunning     arr %d\ttotal %d\tremain %d\twait %d  \n", getClk(), p->id, p->arrival_time, p->runtime, p->remaining, p->waiting);
@@ -105,7 +112,6 @@ void printinfo(processIn *p)
 void UpdateInfo(state newState,Payload* load)
 {   
     if(!RunningProcess) return;
-    
     if(newState == started) {
         RunningProcess->starttime = getClk();
         RunningProcess->systemID = load->pid;
@@ -118,17 +124,20 @@ void UpdateInfo(state newState,Payload* load)
 
 
     }
-    else if(newState == finished || *(RunningProcess->remain) == 0) {
+    else if(newState == finished /*|| *(RunningProcess->remain) == 0*/  || isProcessFinished) {
+        printf("The Process Finished %i\n", getClk());
         int state;
         wait(&state);
+        isProcessFinished = 0;
 
         RunningProcess->curr_state = finished;
-        RunningProcess->finish_time = getClk();
+        //RunningProcess->finish_time = getClk();
 
         ////////// CALCulation //////////
         RunningProcess->TA = RunningProcess->finish_time - RunningProcess->arrival_time;
         RunningProcess->WTA = RunningProcess->TA*1.0 / RunningProcess->runtime;
         update_cpu_calc(RunningProcess);
+        
         RunningProcess->remaining=*(RunningProcess->remain);
         printinfo(RunningProcess); //show results
         
@@ -163,15 +172,7 @@ void UpdateInfo(state newState,Payload* load)
         RunningProcess->curr_state = running;
     }
     
-    else if(newState == running){
-        
-        RunningProcess->curr_state = running;
-        RunningProcess->cumlativeRunning += 1;
-        
-        RunningProcess->remaining = *(RunningProcess->remain);
-        
-        printinfo(RunningProcess);
-    }
+   
 
     // else
     
@@ -194,6 +195,7 @@ int min(int a, int b)
 
 void preempt()
 {
+    printf("=== start stoping ===\n");
     kill(RunningProcess->systemID, SIGTSTP);
     UpdateInfo(stoped, NULL);
 }
@@ -317,14 +319,16 @@ void implementRR(struct PQueue *ReadyQueue, int q)
     processIn *p = &(ReadyQueue->head->proccess);
     if (!RunningProcess && p)
     {
+        //printf("============== start running %i =============\n", getClk());
         RunningProcess = p;
         runProcess(p);
     }
     else if (getClk() >= RunningProcess->laststart + q)
     {   
+        //printf("============== start running %i =============\n", getClk());
     ReadingProcess();
         processIn temp = ReadyQueue->head->proccess;
-        if (temp.remaining > 0 && ReadyQueue->head->next) { // not finished yet & there's another process
+        if (*(temp.remain) > 0 && ReadyQueue->head->next) { // not finished yet & there's another process
             preempt();
             dequeuProcess(ReadyQueue);
              
@@ -333,6 +337,8 @@ void implementRR(struct PQueue *ReadyQueue, int q)
             runProcess(RunningProcess);
         }
     }
+
+
 
 }
 int Allocation()
@@ -353,17 +359,26 @@ int Allocation()
 
 void DeAllocation()
 {
-    if (waitingQueue_allocation->head && waitingQueue_allocation->head->proccess.memsize <= RunningProcess->memsize)
-    {
-        InsertInReadyQueue(waitingQueue_allocation->head->proccess);
-        dequeuProcess(waitingQueue_allocation);
-    }
+    // 1 . deallocation
     if (CURR_ALGO_mem == FFT)
         deallocate_process(memory, RunningProcess);
     else
-    {
         deallocation_process_buddy(RunningProcess);
+
+    int available_sz = RunningProcess->memsize;// the available on memory 
+    // == 2. loop on waiting processes
+    struct PNode *curr = waitingQueue_allocation->head;
+    while (curr)
+    {
+        if(curr->proccess.memsize <= available_sz) {
+            InsertInReadyQueue(curr->proccess);
+            available_sz-= curr->proccess.memsize;
+            DequeuProcessFromQueue(waitingQueue_allocation, curr);
+        }
+        curr = curr->next;
+       
     }
+    
 }
 
 

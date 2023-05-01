@@ -11,4 +11,4 @@ clean:
 all: clean build run
 
 run:
-	./process_generator.out  processes.txt -sch 1 -mem 2
+	./process_generator.out tests.txt -sch 2 -mem 2

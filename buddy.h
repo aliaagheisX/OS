@@ -23,13 +23,13 @@ int findlog(processIn* p)
 void initialize_buddy() {
     for(int i = 0;i < SZ;i++) {
         buddy_list[i] = (List*)malloc(sizeof(List));
-    printf( " buddy list pointer %p\n",buddy_list[i]);
     }
     buddy_list[10]->head = buddy_list[10]->tail = CreateListNode(1024, 0);
 }
 
 int allocation_process_buddy(processIn *process) {
     int index = findlog(process);
+    //
     printf("\n index of process %d and index is %d \n",process->id,index);
 
     //if list of holes not empty   

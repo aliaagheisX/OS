@@ -38,6 +38,8 @@ typedef struct CpuState {
     double totalWaiting ;
     double totalWaitingSquared ;
 
+    int totalTimeSchedule;
+
 } CpuState;
 
 //===============================

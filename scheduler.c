@@ -22,58 +22,32 @@ int main(int argc, char *argv[])
         // 1 - Read if Process come from Generator
         // 2 - if there's Running Process => update it's state
         // 3 - Call implementation of Scheduler Algorithm (may be they use it)
-        
-        if(curr_time != prev_time) {
+        UpdateInfo(running, NULL);
             ReadingProcess();
-            if(RunningProcess)
-                UpdateInfo(running, NULL);
-            if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
-                    implementRR(ReadyQueue, Quantum); 
-            else if (CURR_ALGO == HPF)
-                implementHPF(ReadyQueue);
-            else if (CURR_ALGO == SRTN && 
-                    (!RunningProcess || 
-                        (ReadyQueue->head && ReadyQueue->head->proccess.id != RunningProcess->id)
-                    ))
-                implementSRTN(ReadyQueue);
-            prev_time = curr_time;
-        }
+        if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
+                implementRR(ReadyQueue, Quantum); 
+        else if (CURR_ALGO == HPF)
+            implementHPF(ReadyQueue);
+        else if (CURR_ALGO == SRTN && 
+                (!RunningProcess || 
+                    (ReadyQueue->head && ReadyQueue->head->proccess.id != RunningProcess->id)
+                ))
+            implementSRTN(ReadyQueue);
+            
+        // if(curr_time != prev_time) {
+            
+        //     prev_time = curr_time;
+        // }
 
         
     }
     raise(SIGINT);
 }
 
-void Handler(int signum)
-{
-    int status;
-    pid_t pid = waitpid(-1, &status, WUNTRACED);
-    printf("====== Enter the handler %i %i ====\n", pid, signum);
-    if (pid > 0) {
-        if (WIFSTOPPED(status)) {
-            
-            printf("Child process %d was stopped with sig %d at %d.\n", pid,WTERMSIG(status), getClk());
-        }
-        else if(WIFSIGNALED(status)||WIFEXITED(status)) {
-            printf("Child process %d was killed by signal %d at %d.\n", pid, WTERMSIG(status), getClk());
-            UpdateInfo(finished, NULL);
-            if (CURR_ALGO==RR && !IsEmpty(ReadyQueue))
-                    implementRR(ReadyQueue, Quantum); 
-            else if (CURR_ALGO == HPF)
-                implementHPF(ReadyQueue);
-            else if (CURR_ALGO == SRTN && 
-                    (!RunningProcess || 
-                        (ReadyQueue->head && ReadyQueue->head->proccess.id != RunningProcess->id)
-                    ))
-                implementSRTN(ReadyQueue);
-        } 
-        else {
-            printf("NOT HANDLED %d %d\n", signum, status);
-        }
-    }
-    //RunningProcess = NULL;
-    signal(SIGCHLD, Handler);   //when proc killed or stopped
-    printf("Finished %i %i %p\n", isGeneratorFinished, IsEmpty(ReadyQueue), RunningProcess);
+
+void HandlerPrF(int signum) {
+    RunningProcess->finish_time = getClk();
+    isProcessFinished = 1;
 }
 
 
@@ -102,7 +76,7 @@ void initSCH()
 {
     initClk();
 
-    //signal(SIGCHLD, Handler);   //when proc killed or stopped
+    signal(SIGUSR1, HandlerPrF);   //when proc killed or stopped
     signal(SIGINT, clearResources);
     
    

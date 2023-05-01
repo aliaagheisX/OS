@@ -1,9 +1,7 @@
 #include "headers.h"
 
 /* Modify this file as needed*/
-int remainingtime;
 int id;
-bool isStoppedBefore = 0;
 
 
 int main(int agrc, char * argv[])
@@ -28,9 +26,12 @@ int main(int agrc, char * argv[])
     }
     //printf("Finished Process\n");
 
+    kill(getppid(), SIGUSR1);
     destroyRemain(Rem);
+
+
     destroyClk(false);
 
-    raise(SIGKILL);
+    exit(0);
     
 }
