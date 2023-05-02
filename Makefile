@@ -10,4 +10,4 @@ clean:
 all: clean build run
 
 run:
-	./process_generator.out processes.txt -sch 3 -q 1 -mem 2
+	./process_generator.out processes.txt -sch 2 - -mem 2

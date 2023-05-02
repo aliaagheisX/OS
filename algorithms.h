@@ -54,10 +54,11 @@ void update_cpu_calc(processIn *p) {
 
 }
 void finish_cpu_calc() {
-    cpu_state.cpu_utilization = (double)cpu_state.totalRunningTime / (double)(cpu_state.totalTimeSchedule - 1);
-    cpu_state.avg_wta = cpu_state.totalWTA / cpu_state.numCompleted;
-    cpu_state.avg_waiting = cpu_state.totalWaiting / cpu_state.numCompleted;
-    cpu_state.std_waiting = sqrt( (cpu_state.totalWaitingSquared / cpu_state.numCompleted) - pow(cpu_state.avg_waiting, 2.0));
+    printf("======= totalTimeSchedule %i ==========\n", cpu_state.totalTimeSchedule);
+    cpu_state.cpu_utilization = cpu_state.totalTimeSchedule ? (double)cpu_state.totalRunningTime / (double)(cpu_state.totalTimeSchedule - 1) : 0;
+    cpu_state.avg_wta = cpu_state.numCompleted ? cpu_state.totalWTA / cpu_state.numCompleted : INFINITY;
+    cpu_state.avg_waiting = cpu_state.numCompleted ? cpu_state.totalWaiting / cpu_state.numCompleted : INFINITY;
+    cpu_state.std_waiting = cpu_state.numCompleted ? sqrt( (cpu_state.totalWaitingSquared / cpu_state.numCompleted) - pow(cpu_state.avg_waiting, 2.0)) : INFINITY;
 
     FILE *perf_file = fopen("scheduler.perf", "w"); // open scheduler.perf in append mode
     if (perf_file == NULL) {
@@ -135,7 +136,7 @@ void UpdateInfo(state newState,Payload* load)
 
         ////////// CALCulation //////////
         RunningProcess->TA = RunningProcess->finish_time - RunningProcess->arrival_time;
-        RunningProcess->WTA = RunningProcess->TA*1.0 / RunningProcess->runtime;
+        RunningProcess->WTA = RunningProcess->runtime ? RunningProcess->TA*1.0 / RunningProcess->runtime : INFINITY;
         update_cpu_calc(RunningProcess);
         
         RunningProcess->remaining=*(RunningProcess->remain);

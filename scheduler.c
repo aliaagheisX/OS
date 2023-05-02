@@ -99,6 +99,7 @@ void initSCH()
     initalize_memory();
 
     ///
+    cpu_state.totalTimeSchedule = 0;
     cpu_state.avg_waiting = 0;
     cpu_state.avg_wta = 0;
     cpu_state.cpu_utilization = 0;

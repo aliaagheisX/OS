@@ -22,12 +22,19 @@ int main(int argc, char *argv[])
 
     // 1. Read the input files.
     readProcesses(argv[1]);
-    CURR_ALGO = atoi(argv[3]);
-    if(CURR_ALGO == RR)
-        Quantum = atoi(argv[5]),
-        CURR_ALGO_mem = atoi(argv[7]);
-    else 
-        CURR_ALGO_mem = atoi(argv[5]);
+    for(int i =2;i <= 6;i+= 2) {
+        if(i >= argc) break;
+        
+        if(strcmp(argv[i] ,"-sch") == 0) 
+            CURR_ALGO = atoi(argv[i+1]);
+        else if(strcmp(argv[i] ,"-mem") == 0)
+            CURR_ALGO_mem = atoi(argv[i+1]);
+        else
+            Quantum = atoi(argv[i+1]);
+    }
+
+
+    //printf("======= %i %i %i =======\n",argc, CURR_ALGO, CURR_ALGO_mem);
 
    
     // 3. Initiate and create the scheduler and clock processes.
