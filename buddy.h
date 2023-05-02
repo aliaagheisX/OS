@@ -17,6 +17,8 @@ void allocate_hole_buddy(List* list, int memsize, int start_address);
 
 int findlog(processIn* p)
 {
+    if(p->memsize == 0) 
+        return 1;
     return ceil(log2(p->memsize));
 }
 

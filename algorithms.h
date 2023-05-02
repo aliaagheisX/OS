@@ -34,6 +34,7 @@ int Allocation();
 void ReadingProcess() {
     while (!isGeneratorFinished && getProcessFromGen() != -1) {
         struct PNode *newNode = CreateNode(curr_procc);
+        printf("======= Insert %i at %i ====\n", curr_procc.id, getClk());
         if (CURR_ALGO == HPF)
                 enqueuProcessByPriority(newNode, ReadyQueue);
         else if (CURR_ALGO == SRTN)
@@ -270,6 +271,8 @@ void InsertInSRTN(processIn proccess, struct PQueue *ReadyQueue)
 
 void InsertInRR(processIn proccess, struct PQueue *ReadyQueue, int Q)
 {
+    //printf("==== Insert %i at %i==== \n", proccess.id, getClk());
+
     struct PNode *newNode = CreateNode(proccess);
     enqueuProcess(newNode, ReadyQueue);
 }
@@ -301,6 +304,7 @@ void implementSRTN(struct PQueue *ReadyQueue)
 
 void InsertInReadyQueue(processIn proccess) {
     struct PNode *newNode = CreateNode(proccess);
+    //printf("==== Insert %i at %i==== \n", proccess.id, getClk());
     if (CURR_ALGO == HPF)
             enqueuProcessByPriority(newNode, ReadyQueue);
     else if (CURR_ALGO == SRTN)
@@ -316,17 +320,18 @@ void implementRR(struct PQueue *ReadyQueue, int q)
         return;
 
     processIn *p = &(ReadyQueue->head->proccess);
+
     if (!RunningProcess && p) {
         RunningProcess = p;
         runProcess(p);
     }
     else if (getClk() >= RunningProcess->laststart + q)
     {   
-        ReadingProcess();
         processIn temp = ReadyQueue->head->proccess;
         if (*(temp.remain) > 0 && ReadyQueue->head->next) { // not finished yet & there's another process
             preempt();
             dequeuProcess(ReadyQueue);
+            ReadingProcess();
              
             InsertInRR(temp, ReadyQueue, q);    
             RunningProcess = &ReadyQueue->head->proccess;
