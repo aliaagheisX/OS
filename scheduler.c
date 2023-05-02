@@ -50,10 +50,17 @@ void HandlerPrF(int signum) {
     isProcessFinished = 1;
 }
 
-
+Destroy_Shared_Rem(){
+    struct PNode*temp=ReadyQueue->head;
+    while(temp){
+        shmdt(temp->proccess.remain);
+        shmctl(temp->proccess.shmid, IPC_RMID, (struct shmid_ds *)0);
+        temp=temp->next;
+    }
+}
 void clearResources(int signum)
 {
-    
+    Destroy_Shared_Rem();
     finish_cpu_calc();
     fclose(log_file); // close scheduler.log
     fclose(mem_log_file);
@@ -83,7 +90,7 @@ void initSCH()
     log_file = fopen("scheduler.log", "w"); // open scheduler.perf in append mode
     mem_log_file = fopen("memory.log", "w"); // open scheduler.perf in append mode
 
-    fprintf(log_file,"At time x\tprocess y\tstate    \tarr w\ttotal z\tremain y\twait k\n");
+    fprintf(log_file,"At time x process y state arr w total z remain y wait k\n");
     fprintf(mem_log_file,"#At time x allocated y bytes for process z from I to j\n");
 
     ReadyQueue = createQueue();

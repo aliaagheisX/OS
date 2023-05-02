@@ -82,7 +82,7 @@ void printinfo(processIn *p)
 
     case 0:
         /* code */
-        fprintf(log_file, "At time %d process %d started arr %d total %d remain %d wait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, p->runtime, p->waiting);
+        fprintf(log_file, "At time %d process %d started arr %d total %d remain %d wait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         fprintf(mem_log_file, "At time %d allocated %d bytes for process %d from %d to %d\n", p->starttime, p->memsize, p->id, p->start_address, p->start_address + p->memsize - 1);
         break;
     case 1:
@@ -238,6 +238,7 @@ void runProcess(processIn *pRun)
             Payload load;
             load.pid = pid;
             pRun->remain =attachRemain(shmid);
+            *(pRun->remain) = pRun->runtime;
             UpdateInfo(started, &load);
         }
     }
