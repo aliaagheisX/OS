@@ -34,7 +34,6 @@ int Allocation();
 void ReadingProcess() {
     while (!isGeneratorFinished && getProcessFromGen() != -1) {
         struct PNode *newNode = CreateNode(curr_procc);
-        printf("== read process %i == \n", getClk());
         if (CURR_ALGO == HPF)
                 enqueuProcessByPriority(newNode, ReadyQueue);
         else if (CURR_ALGO == SRTN)
@@ -83,18 +82,18 @@ void printinfo(processIn *p)
 
     case 0:
         /* code */
-        fprintf(log_file, "At time %d\tprocess %d\tstarted    \tarr %d\ttotal %d\tremain %d\twait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
+        fprintf(log_file, "At time %d process %d started arr %d total %d remain %d wait %d\n", p->starttime, p->id, p->arrival_time, p->runtime, p->runtime, p->waiting);
         fprintf(mem_log_file, "At time %d allocated %d bytes for process %d from %d to %d\n", p->starttime, p->memsize, p->id, p->start_address, p->start_address + p->memsize - 1);
         break;
     case 1:
-        fprintf(log_file, "At time %d\tprocess %d\tstopped     arr %d\ttotal %d\tremain %d\twait %d \n", p->lastStop, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
+        fprintf(log_file, "At time %d process %d stopped arr %d total %d remain %d wait %d\n", p->lastStop, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         break;
     case 2:
-        fprintf(log_file, "At time %d\tprocess %d\tresumed     arr %d\ttotal %d\tremain %d\twait %d  \n", p->laststart, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
+        fprintf(log_file, "At time %d process %d resumed arr %d total %d remain %d wait %d \n", p->laststart, p->id, p->arrival_time, p->runtime, *(p->remain), p->waiting);
         /* code */
         break;
     case 3:
-        fprintf(log_file, "At time %d\tprocess %d\tfinished\tarr %d\ttotal %d\tremain %d\twait %d\tTA %d\tWTA %.2f \n", 
+        fprintf(log_file, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d WTA %.2f\n", 
         p->finish_time, 
         p->id, 
         p->arrival_time, 
@@ -195,7 +194,6 @@ int min(int a, int b)
 
 void preempt()
 {
-    printf("=== start stoping ===\n");
     kill(RunningProcess->systemID, SIGTSTP);
     UpdateInfo(stoped, NULL);
 }
@@ -212,13 +210,13 @@ void runProcess(processIn *pRun)
             RunningProcess = NULL;
             return;
         }
-    int shmid = shmget(IPC_PRIVATE, 4096, IPC_CREAT | 0644);
-    if (shmid == -1)
-    {
-        perror("Error in create");
-        exit(-1);
-    }
-    RunningProcess->shmid = shmid;
+        int shmid = shmget(IPC_PRIVATE, 4096, IPC_CREAT | 0644);
+        if (shmid == -1)
+        {
+            perror("Error in create");
+            exit(-1);
+        }
+        RunningProcess->shmid = shmid;
 
         int pid = fork();
         if (pid == -1)
@@ -317,16 +315,13 @@ void implementRR(struct PQueue *ReadyQueue, int q)
         return;
 
     processIn *p = &(ReadyQueue->head->proccess);
-    if (!RunningProcess && p)
-    {
-        //printf("============== start running %i =============\n", getClk());
+    if (!RunningProcess && p) {
         RunningProcess = p;
         runProcess(p);
     }
     else if (getClk() >= RunningProcess->laststart + q)
     {   
-        //printf("============== start running %i =============\n", getClk());
-    ReadingProcess();
+        ReadingProcess();
         processIn temp = ReadyQueue->head->proccess;
         if (*(temp.remain) > 0 && ReadyQueue->head->next) { // not finished yet & there's another process
             preempt();
@@ -337,10 +332,9 @@ void implementRR(struct PQueue *ReadyQueue, int q)
             runProcess(RunningProcess);
         }
     }
-
-
-
 }
+
+
 int Allocation()
 {
     if ((CURR_ALGO_mem == FFT && allocate_process(memory, RunningProcess) == -1) || (CURR_ALGO_mem == BDD && allocation_process_buddy(RunningProcess) == -1))
@@ -356,6 +350,7 @@ int Allocation()
     }
     return 1;
 }
+
 
 void DeAllocation()
 {

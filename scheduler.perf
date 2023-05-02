@@ -1,4 +1,4 @@
 CPU utilization: 100.00%
-Average weighted turnaround time: -nan
-Average waiting time: 0.00
-Standard deviation of waiting time: 0.00
+Average weighted turnaround time: 3.43
+Average waiting time: 16.80
+Standard deviation of waiting time: 8.61

@@ -30,7 +30,6 @@ void initialize_buddy() {
 int allocation_process_buddy(processIn *process) {
     int index = findlog(process);
     //
-    printf("\n index of process %d and index is %d \n",process->id,index);
 
     //if list of holes not empty   
     if(buddy_list[index]->head)  {
@@ -133,7 +132,6 @@ void deallocation_process_buddy(processIn *process) {
 
 void merging_holes_till_up(int index) {
     if(index >= SZ) return;
-    printf("Enter index %i\n", index);
     int real_size = (1 << index);
     //printf("%d",buddy_list[index]);
     ListNode* curr = buddy_list[index]->head;
