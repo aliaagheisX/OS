@@ -1,4 +1,8 @@
 ## Table of Contents
+- [About](#About)
+- [Getting Started](#Getting-Started)
+- [Prerequisite](#Prerequisite)
+- [Running](#Running)
 - [Data Structures used](#data-structures)
 - [Algorithm Explanation and Results](#algorithm-explanation-and-results)
   - [Highest Priority First](#highest-priority-first)
@@ -8,6 +12,41 @@
     - [First Fit Algorithm](#first-fit-algorithm)
     - [Buddy Memory Allocation Algorithm](#buddy-memory-allocation-algorithm)
 - [Assumptions](#assumptions)
+## About <a name = "about"></a>
+- This is an Operating Systems Course Project where we were required to implement various process management alogirhtms, It's scheduler the processes that there exist in the system
+
+## Getting Started <a name = "get-started"></a>
+
+> This is a list of instructions to set up the project.
+
+### Prerequisite <a name = "req"></a>
+
+1. GCC compiler installed
+2. Any unix based system
+
+### Running <a name = "running"></a>
+
+**_Running program_**
+
+
+  1. **_build and run the project._**
+
+    $ Makefile
+
+  2. **_compile the project._**
+
+    $ make build
+
+  3. **_run the project._**
+
+    $ make all
+
+
+
+## Built Using <a name = "tech"></a>
+
+- **C Language**
+
 
 ## Data Structures
 
@@ -66,3 +105,36 @@ int allocate_process(List* list, processIn* process)
 ```
 
 The function first initializes two pointers to nodes in the linked list: `curr_hole` points to the head of the list, and `prev_hole` points to `NULL`. The function then iterates
+## Contributors <a name = "Contributors"></a>
+
+<table>
+  <tr>
+    <td align="center">
+    <a href="https://github.com/aliaagheisX" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/35627349?v=4" width="150px;" alt="Aliaa Gheis"/>
+    <br />
+    <sub><b>Aliaa Gheis</b></sub></a>
+    </td>
+        <td align="center">
+    <a href="https://github.com/mennamohamed0207" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/90017398?v=4" width="150px;" alt="Menna Mohamed"/>
+    <br />
+    <sub><b>Menna Mohamed</b></sub></a>
+    </td>
+    <td align="center">
+    <td align="center">
+    <a href="https://github.com/Menna-Ahmed7" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/110634473?v=4" width="150px;" alt="Mennatallah Ahmed"/>
+    <br />
+    <sub><b>Mennatallah Ahmed</b></sub></a>
+    </td>
+    <td align="center">
+    <a href="https://github.com/SH8664" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/113303945?v=4" width="150px;" alt="Sara Bisheer"/>
+    <br />
+    <sub><b>Sara Bisheer</b></sub></a>
+    </td>
+    
+    
+  </tr>
+ </table>
