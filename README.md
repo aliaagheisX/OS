@@ -1,3 +1,8 @@
+# OopsOS
+<p align="center">
+<img src="download.png" width="256"/>
+</p>
+
 ## Table of Contents
 - [About](#About)
 - [Getting Started](#Getting-Started)
